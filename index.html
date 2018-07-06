@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <link rel="stylesheet" href="../css/base.css">
     <style>
         html,body{
             width: 100%;
@@ -20,7 +19,11 @@
             padding-left: 10px;
             position: absolute;
         }
-
+        li,ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
         ._province{
             width: 100%;
             height: 100%;
@@ -61,11 +64,14 @@
             width: 100%;
             top: 0;
             right: -100%;
-            height: 100%;
+            height:auto;
             border-radius: 5px;
             overflow: auto;
             border: 1px solid #ccc;
-            background-color: red;
+        }
+        .div_s .div_q li:hover{
+            background-color:#3AA7FF;
+            color: white;
         }
         .div_s:hover .div_q{
             display: block;
@@ -73,8 +79,8 @@
     </style>
 </head>
 <body>
-    <input class="province location" type="text">
-<script src="../js/province.js"></script>
+    <input  class="province location" readonly="readonly" type="text">
+<script src="./province.js"></script>
 <script>
     function tion(node,cn){
         this.pitch=false;
@@ -91,13 +97,21 @@
         this.s_txt="";
         this._s_txt="";
         this._q_txt="";
+        this.ul2=null;
+        this.ul3=null
 
     }
    Object.assign(tion.prototype,{
       init:function(){
+          var _this = this;
           this._postion();
           this._domdiv();
           this._input_btn();
+          this._sanjion(function(node){
+              _this._q_txt=node.innerHTML;
+              _this._input_text(true,true,true);
+              document.body.removeChild(_this.s);
+          });
       },
        /**
         * 创建实例后先遍历出省份
@@ -108,14 +122,16 @@
         *   5.0 触摸出现市区选项
         *   6.0 触发绑定事件，结束清除事件
         *   7.0 二级名称选择与样式的修改
-        *
+        *   8.0 选出三级数组
         * **/
+       /**获取坐标**/
        _postion:function(){
             this.x= this.input.offsetLeft;
             this.y= this.input.offsetTop+this.input.offsetHeight;
             this.wid = this.input.offsetWidth;
             this.hei = this.input.offsetHeight;
        },
+       /**生成菜单**/
        _domdiv:function(cn){
            this.s = document.createElement("div");
            var ul1 =document.createElement("ul");
@@ -139,47 +155,61 @@
            this._q.className="div_q";
 
        },
+       /**一级菜单模版**/
        _province:function(){
            var html = "";
            for(var i =0,idx= proconce.length;i<idx;i++) {
-               html += "<li type='" + proconce[i].type + "'>" + proconce[i].name + "</li>"
+               html += "<li data_type='" + proconce[i].type + "'>" + proconce[i].name + "</li>"
            }
            return html;
        },
+       /**点击弹出与取消**/
        _input_btn:function(){
            var _this = this;
            _this.input.addEventListener("click",function(e){
+               this.value="";
+               _this.s_txt="";_this._s_txt="";_this._q_txt="";
                _this.isrem=true;
                document.body.appendChild(_this.s);
                _this._bound( )
            });
            document.body.addEventListener("click",function(e){
                 e = e ||window.event;
-                for(var i = 0 ,idx=e.path.length;i<idx;i++){
-                       if(e.path[i].className===_this.s.className||e.path[i].className===_this.input.className){
-                           return ;
-                      }
+               if(e.path) {
+                   for (var i = 0, idx = e.path.length; i < idx; i++) {
+                       if (e.path[i].className === _this.s.className || e.path[i].className === _this.input.className) {
+                           return;
+                       }
+                   }
+               }else{
+                   if(e.srcElement.className===_this.s.className ||e.srcElement.className===_this.input.className){
+                          return;
+                   }
+
                }
                 if(_this.isrem){
                    _this.isrem=false;
-                   document.body.removeChild(_this.s);
+                   this.removeChild(_this.s);
                    _this._remove( )
                }
            })
        },
+       /**一级菜单的选择**/
        _bound:function(){
             var _this = this;
             var lis = document.querySelectorAll("."+this.cn+">ul li");
-            var index= null;
             for(var i = 0,idx=lis.length;i<idx;i++){
                    lis[i].onmouseover=function(){
                        _this._boundstyle(lis,this);
-                       _this._input_text({"txt":this.innerHTML});
-                       _this._s.children[0].children[0].innerHTML=_this._Submenu(this.type);
-                       _this._s.appendChild(_this._q)
+                       _this.s_txt =this.innerHTML;
+                       _this._input_text(true,false,false);
+                        var dx =  this.getAttribute("data_type");
+                       _this._s.children[0].children[0].innerHTML=_this._Submenu(dx);
+                       _this._s.appendChild(_this._q);
                    }
              }
        },
+       /**清楚绑定的事件**/
        _remove:function(){
            var lis = document.querySelectorAll("."+this.cn+">ul li");
            for(var i = 0,idx=lis.length;i<idx;i++){
@@ -209,34 +239,87 @@
        },
        /**添加到input**/
        _input_text:function(a,b,c){
-           if(a) this.s_txt=a["txt"];
-           if(b) this._s_txt=b["txt"];
-           if(c) this._q_txt=c["txt"];
+           if(a&&b===false){
+               this._s_txt="";
+               this._q_txt="";
+           }
+           if(a&&b&&c===false){
+               this._q_txt=""
+           }
            this.input.value=  this.s_txt+this._s_txt+this._q_txt;
        },
        /**二级菜单模版**/
        _Submenu:function(index){
            var html ="";
-           index=proconce[index].sub;
-           for(var k = 0,ix = index.length ;k<ix;k++ ){
-               html+="<li>"+index[k].name+"</li>"
+           this.ul2=proconce[index].sub;
+           for(var k = 0,ix = this.ul2.length ;k<ix;k++ ){
+               html+="<li>"+this.ul2[k].name+"</li>"
            }
            return html;
+       },
+       /**三级数据**/
+       _sanji:function(node){
+               for(var i=0,idx = this.ul2.length;i<idx;i++){
+                   if(this.ul2[i].name===node){
+                       if(this.ul2[i].sub){
+                           this.ul3=this.ul2[i].sub;
+                       }else{
+                           this.ul3=null;
+                       }
+                       this._tempiii( );
+                       return ;
+                   }
+               }
+       },
+       /**三级模版**/
+       _tempiii:function( ){
+           var _this = this;
+           if(this.ul3){
+               var html ="<ul>";
+               for(var i=0,idx=this.ul3.length;i<idx;i++){
+                   html+="<li>"+this.ul3[i].name+"</li>"
+               }
+               html+="</ul>";
+               this._q.style.display="";
+               this._q.innerHTML=html;
+               this._s.onclick=null;
+           }else{
+               this._q.style.display="none";
+               this._q.innerHTML="<ul></ul>";
+               this._s.onclick=function(){
+                   document.body.removeChild(_this.s);
+               }
+           }
        },
        /**给所有二级菜单绑定事件**/
        _SubmenuEv:function(node){
            var _this = this;
           this.entrust(node,function(node){
-             _this._input_text(false,{"txt":node.innerHTML});
-             _this._SubmenuEvstyle(node.parentNode.children,node);
+              _this._input_text(true,true,false);
+              _this._SubmenuEvstyle(node.parentNode.children,node);
+              _this._sanji(node.innerHTML)
           })
        },
         /**二级菜单使用事件委托**/
         entrust :function(node,cb){
+            var _this = this;
             node.children[0].children[0].onmouseover=function(ev){
-                console.log(this);
                 var target = ev.target;
                 while(target !== node ){
+                    if(target.tagName.toLowerCase() == 'li'){
+                        break;
+                    }
+                    target = target.parentNode;
+                }
+                _this._s_txt=target.innerHTML;
+                cb&&cb(target);
+            }
+        },
+        /**三级菜单的事件委托**/
+        _sanjion:function(cb){
+            this._q.onclick=function(ev){
+                var target = ev.target;
+                while(target !==  this._q ){
                     if(target.tagName.toLowerCase() == 'li'){
                         break;
                     }
