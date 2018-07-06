@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <style>
+        html,body{
+            width: 100%;
+            height: 100%;
+        }
+        .province{
+            width: 180px;
+            border-radius: 5px;
+            height: 36px;
+            border: 1px solid #c0ccda;
+            color: #324057;
+            box-sizing: border-box;
+            vertical-align: bottom;
+            padding-left: 10px;
+            position: absolute;
+        }
+
+        ._province{
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            box-sizing: border-box;
+        }
+        ._province li,.div_s li{
+            padding: 0 10px;
+            cursor: pointer;
+        }
+        ._ul1{
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+        .div_s{
+            display: none;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            right: -100%;
+            height: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+
+        }
+        .div_s >div:nth-child(1){
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+        ._domdiv:hover .div_s{
+           display: block;
+        }
+        .div_s .div_q{
+            display: none;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            right: -100%;
+            height: 100%;
+            border-radius: 5px;
+            overflow: auto;
+            border: 1px solid #ccc;
+            background-color: red;
+        }
+        .div_s:hover .div_q{
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <input class="province location" type="text">
+<script src="../js/province.js"></script>
+<script>
+    function tion(node,cn){
+        this.pitch=false;
+        this.input = node;
+        this.cn = cn;
+        this.x=0;
+        this.y=0;
+        this.wid=0;
+        this.hei=0;
+        this.s =null;
+        this._s=null;
+        this._q=null;
+        this.isrem=false;
+        this.s_txt="";
+        this._s_txt="";
+        this._q_txt="";
+
+    }
+   Object.assign(tion.prototype,{
+      init:function(){
+          this._postion();
+          this._domdiv();
+          this._input_btn();
+      },
+       /**
+        * 创建实例后先遍历出省份
+        *   1.0 找到input位置
+        *   2.0 创建div标签并定位
+        *   3.0 遍历出所有省份信息
+        *   4.0 点击出现省份信息(点击其他空白处消失)
+        *   5.0 触摸出现市区选项
+        *   6.0 触发绑定事件，结束清除事件
+        *   7.0 二级名称选择与样式的修改
+        *
+        * **/
+       _postion:function(){
+            this.x= this.input.offsetLeft;
+            this.y= this.input.offsetTop+this.input.offsetHeight;
+            this.wid = this.input.offsetWidth;
+            this.hei = this.input.offsetHeight;
+       },
+       _domdiv:function(cn){
+           this.s = document.createElement("div");
+           var ul1 =document.createElement("ul");
+                ul1.className="_ul1";
+           this.s.appendChild(ul1);
+           this.s.className=this.cn;
+           this.s.style.cssText="left:"+this.x+"px;top:"+this.y+"px;width:"+this.wid+"px;height:"+this.hei*5+"px;line-height:"+this.hei+"px;  position:absolute;border: 1px solid #ccc; border-radius:5px;";
+           this.s.children[0].innerHTML=this._province();
+           /**添加二级菜单**/
+           this._s = document.createElement("div");
+           this._s.className="div_s";
+           var div_s1 =document.createElement("div");
+           var ul2 = document.createElement("ul");
+                ul2.className="_ul2";
+                div_s1.appendChild(ul2);
+           this._s.appendChild(div_s1);
+           this.s.appendChild(this._s);
+           this._SubmenuEv(this._s);
+           /**添加三级菜单**/
+           this._q = document.createElement("div");
+           this._q.className="div_q";
+
+       },
+       _province:function(){
+           var html = "";
+           for(var i =0,idx= proconce.length;i<idx;i++) {
+               html += "<li type='" + proconce[i].type + "'>" + proconce[i].name + "</li>"
+           }
+           return html;
+       },
+       _input_btn:function(){
+           var _this = this;
+           _this.input.addEventListener("click",function(e){
+               _this.isrem=true;
+               document.body.appendChild(_this.s);
+               _this._bound( )
+           });
+           document.body.addEventListener("click",function(e){
+                e = e ||window.event;
+                for(var i = 0 ,idx=e.path.length;i<idx;i++){
+                       if(e.path[i].className===_this.s.className||e.path[i].className===_this.input.className){
+                           return ;
+                      }
+               }
+                if(_this.isrem){
+                   _this.isrem=false;
+                   document.body.removeChild(_this.s);
+                   _this._remove( )
+               }
+           })
+       },
+       _bound:function(){
+            var _this = this;
+            var lis = document.querySelectorAll("."+this.cn+">ul li");
+            var index= null;
+            for(var i = 0,idx=lis.length;i<idx;i++){
+                   lis[i].onmouseover=function(){
+                       _this._boundstyle(lis,this);
+                       _this._input_text({"txt":this.innerHTML});
+                       _this._s.children[0].children[0].innerHTML=_this._Submenu(this.type);
+                       _this._s.appendChild(_this._q)
+                   }
+             }
+       },
+       _remove:function(){
+           var lis = document.querySelectorAll("."+this.cn+">ul li");
+           for(var i = 0,idx=lis.length;i<idx;i++){
+               lis[i].onmouseover=null
+           }
+       },
+
+
+
+       /**一级菜单触摸样式**/
+       _boundstyle:function(lis,_this){
+            for(var i = 0,idx=lis.length;i<idx;i++){
+                lis[i].style.background="#fff";
+                lis[i].style.color="#000";
+           }
+               _this.style.background="#3AA7FF";
+               _this.style.color="#fff";
+       },
+       /**二级菜单触摸样式**/
+       _SubmenuEvstyle:function(node,_this){
+           for(var i = 0,idx= node.length;i<idx;i++){
+               node[i].style.background="#fff";
+               node[i].style.color="#000"
+           }
+           _this.style.background="#3AA7FF";
+           _this.style.color="#fff"
+       },
+       /**添加到input**/
+       _input_text:function(a,b,c){
+           if(a) this.s_txt=a["txt"];
+           if(b) this._s_txt=b["txt"];
+           if(c) this._q_txt=c["txt"];
+           this.input.value=  this.s_txt+this._s_txt+this._q_txt;
+       },
+       /**二级菜单模版**/
+       _Submenu:function(index){
+           var html ="";
+           index=proconce[index].sub;
+           for(var k = 0,ix = index.length ;k<ix;k++ ){
+               html+="<li>"+index[k].name+"</li>"
+           }
+           return html;
+       },
+       /**给所有二级菜单绑定事件**/
+       _SubmenuEv:function(node){
+           var _this = this;
+          this.entrust(node,function(node){
+             _this._input_text(false,{"txt":node.innerHTML});
+             _this._SubmenuEvstyle(node.parentNode.children,node);
+          })
+       },
+        /**二级菜单使用事件委托**/
+        entrust :function(node,cb){
+            node.children[0].children[0].onmouseover=function(ev){
+                console.log(this);
+                var target = ev.target;
+                while(target !== node ){
+                    if(target.tagName.toLowerCase() == 'li'){
+                        break;
+                    }
+                    target = target.parentNode;
+                }
+                cb&&cb(target);
+            }
+        }
+   });
+
+
+    var a  = document.querySelector(".location");
+    var b = new tion(a,"_domdiv");
+    b.init()
+</script>
+</body>
+</html>
