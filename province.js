@@ -1954,3 +1954,239 @@ var proconce = [
         type:33
     },
 ];
+
+function tion(node,cn){
+    this.pitch=false;
+    this.input = node;
+    this.cn = cn;
+    this.x=0;
+    this.y=0;
+    this.wid=0;
+    this.hei=0;
+    this.s =null;
+    this._s=null;
+    this._q=null;
+    this.isrem=false;
+    this.s_txt="";
+    this._s_txt="";
+    this._q_txt="";
+    this.ul2=null;
+    this.ul3=null
+
+}
+Object.assign(tion.prototype,{
+    init:function(){
+        var _this = this;
+        this._postion();
+        this._domdiv();
+        this._input_btn();
+        this._sanjion(function(node){
+            _this._q_txt=node.innerHTML;
+            _this._input_text(true,true,true);
+            document.body.removeChild(_this.s);
+        });
+    },
+    /**
+     * 创建实例后先遍历出省份
+     *   1.0 找到input位置
+     *   2.0 创建div标签并定位
+     *   3.0 遍历出所有省份信息
+     *   4.0 点击出现省份信息(点击其他空白处消失)
+     *   5.0 触摸出现市区选项
+     *   6.0 触发绑定事件，结束清除事件
+     *   7.0 二级名称选择与样式的修改
+     *   8.0 选出三级数组
+     * **/
+    /**获取坐标**/
+    _postion:function(){
+        this.x= this.input.offsetLeft;
+        this.y= this.input.offsetTop+this.input.offsetHeight;
+        this.wid = this.input.offsetWidth;
+        this.hei = this.input.offsetHeight;
+    },
+    /**生成菜单**/
+    _domdiv:function(){
+        this.s = document.createElement("div");
+        var ul1 =document.createElement("ul");
+        ul1.className="_ul1";
+        this.s.appendChild(ul1);
+        this.s.className=this.cn;
+        this.s.classList.add("location_box");
+        this.s.style.cssText="left:"+this.x+"px;top:"+this.y+"px;width:"+this.wid+"px;height:"+this.hei*5+"px;line-height:"+this.hei+"px;  position:absolute;border: 1px solid #ccc; border-radius:5px;";
+        this.s.children[0].innerHTML=this._province();
+        /**添加二级菜单**/
+        this._s = document.createElement("div");
+        this._s.className="div_s";
+        var div_s1 =document.createElement("div");
+        var ul2 = document.createElement("ul");
+        ul2.className="_ul2";
+        div_s1.appendChild(ul2);
+        this._s.appendChild(div_s1);
+        this.s.appendChild(this._s);
+        this._SubmenuEv(this._s);
+        /**添加三级菜单**/
+        this._q = document.createElement("div");
+        this._q.className="div_q";
+
+    },
+    /**一级菜单模版**/
+    _province:function(){
+        var html = "";
+        for(var i =0,idx= proconce.length;i<idx;i++) {
+            html += "<li data_type='" + proconce[i].type + "'>" + proconce[i].name + "</li>"
+        }
+        return html;
+    },
+    /**点击弹出与取消**/
+    _input_btn:function(){
+        var _this = this;
+        _this.input.addEventListener("click",function(e){
+            this.value="";
+            _this.s_txt="";_this._s_txt="";_this._q_txt="";
+
+            document.body.appendChild(_this.s);
+            _this._bound( );
+            window.event?window.event.cancelBubble=true:e.stopPropagation();
+        });
+        document.body.addEventListener("click",function(e){
+            if(document.querySelector(".location_box")){
+                this.removeChild(document.querySelector(".location_box"));
+                _this._remove( )
+            }
+        })
+    },
+    /**一级菜单的选择**/
+    _bound:function(){
+        var _this = this;
+        var lis = document.querySelectorAll("."+this.cn+">ul li");
+        for(var i = 0,idx=lis.length;i<idx;i++){
+            lis[i].onmouseover=function(){
+                _this._boundstyle(lis,this);
+                _this.s_txt =this.innerHTML;
+                _this._input_text(true,false,false);
+                var dx =  this.getAttribute("data_type");
+                _this._s.children[0].children[0].innerHTML=_this._Submenu(dx);
+                _this._s.appendChild(_this._q);
+            }
+        }
+    },
+    /**清楚绑定的事件**/
+    _remove:function(){
+        var lis = document.querySelectorAll("."+this.cn+">ul li");
+        for(var i = 0,idx=lis.length;i<idx;i++){
+            lis[i].onmouseover=null
+        }
+    },
+
+
+
+    /**一级菜单触摸样式**/
+    _boundstyle:function(lis,_this){
+        for(var i = 0,idx=lis.length;i<idx;i++){
+            lis[i].style.background="#fff";
+            lis[i].style.color="#000";
+        }
+        _this.style.background="#3AA7FF";
+        _this.style.color="#fff";
+    },
+    /**二级菜单触摸样式**/
+    _SubmenuEvstyle:function(node,_this){
+        for(var i = 0,idx= node.length;i<idx;i++){
+            node[i].style.background="#fff";
+            node[i].style.color="#000"
+        }
+        _this.style.background="#3AA7FF";
+        _this.style.color="#fff"
+    },
+    /**添加到input**/
+    _input_text:function(a,b,c){
+        if(a&&b===false){
+            this._s_txt="";
+            this._q_txt="";
+        }
+        if(a&&b&&c===false){
+            this._q_txt=""
+        }
+        this.input.value=  this.s_txt+this._s_txt+this._q_txt;
+    },
+    /**二级菜单模版**/
+    _Submenu:function(index){
+        var html ="";
+        this.ul2=proconce[index].sub;
+        for(var k = 0,ix = this.ul2.length ;k<ix;k++ ){
+            html+="<li>"+this.ul2[k].name+"</li>"
+        }
+        return html;
+    },
+    /**三级数据**/
+    _sanji:function(node){
+        for(var i=0,idx = this.ul2.length;i<idx;i++){
+            if(this.ul2[i].name===node){
+                if(this.ul2[i].sub){
+                    this.ul3=this.ul2[i].sub;
+                }else{
+                    this.ul3=null;
+                }
+                this._tempiii( );
+                return ;
+            }
+        }
+    },
+    /**三级模版**/
+    _tempiii:function( ){
+        var _this = this;
+        if(this.ul3){
+            var html ="<ul>";
+            for(var i=0,idx=this.ul3.length;i<idx;i++){
+                html+="<li>"+this.ul3[i].name+"</li>"
+            }
+            html+="</ul>";
+            this._q.style.display="";
+            this._q.innerHTML=html;
+            this._s.onclick=null;
+        }else{
+            this._q.style.display="none";
+            this._q.innerHTML="<ul></ul>";
+            this._s.onclick=function(){
+                document.body.removeChild(_this.s);
+            }
+        }
+    },
+    /**给所有二级菜单绑定事件**/
+    _SubmenuEv:function(node){
+        var _this = this;
+        this.entrust(node,function(node){
+            _this._input_text(true,true,false);
+            _this._SubmenuEvstyle(node.parentNode.children,node);
+            _this._sanji(node.innerHTML)
+        })
+    },
+    /**二级菜单使用事件委托**/
+    entrust :function(node,cb){
+        var _this = this;
+        node.children[0].children[0].onmouseover=function(ev){
+            var target = ev.target;
+            while(target !== node ){
+                if(target.tagName.toLowerCase() == 'li'){
+                    break;
+                }
+                target = target.parentNode;
+            }
+            _this._s_txt=target.innerHTML;
+            cb&&cb(target);
+        }
+    },
+    /**三级菜单的事件委托**/
+    _sanjion:function(cb){
+        this._q.onclick=function(ev){
+            var target = ev.target;
+            while(target !==  this._q ){
+                if(target.tagName.toLowerCase() == 'li'){
+                    break;
+                }
+                target = target.parentNode;
+            }
+            cb&&cb(target);
+        }
+    }
+});
